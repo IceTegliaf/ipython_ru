@@ -1,1 +1,15 @@
-test first git commit =)
+iPython.ru - Russian Python-Developers community.
+
+
+Main project directions:
+	1. On-line python docomentation - like Wiki. Base all documentaion on auto generated data from pydoc or e.t.c. 
+	2. Many Python examples (from community)
+	3. Question-Answer engine - like StackOverflow. Only for python developers.
+	4. Learnong Python: lessons, tests, articles and social communications
+	
+Priority technologies:
+	1. Python !
+	2. Django
+	3. MongoDb  -  use for get experience
+	4. PostgreSQL
+ 
