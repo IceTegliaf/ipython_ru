@@ -13,3 +13,16 @@ Priority technologies:
 	3. MongoDb  -  use for get experience
 	4. PostgreSQL
  
+
+ 
+
+Project structute:
+
+docs/ 				- all project docs, not running code
+project/ 			- site
+project/media/ 		- static content
+project/settings/	- project configuration.  Use settings/local.py for set your local configuration (Set Django settings adn e.t.c.) 
+project/src/		- all project sources
+project/templates/	- contains all Dajngo HTML templates
+   
+   
