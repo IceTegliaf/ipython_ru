@@ -21,6 +21,9 @@ class DocWithRequires(MongoDoc):
     age = properties.Integer(required = True)
     d = properties.Date(required = True)
     dt = properties.DateTime(required = True)
+    
+class DocWithLink(MongoDoc):
+    parent = properties.Link(Doc1)
 
 
 class DocTest(test.TestCase):
@@ -80,6 +83,15 @@ class DocTest(test.TestCase):
         assert isinstance(obj2.d1, datetime.date)
         assert isinstance(obj2.when, datetime.datetime)
         
+        #link save
+        obj3 = DocWithLink(parent = obj)
+        obj3.save()
+        
+        obj3_2 = DocWithLink.documents.get(_id = obj3._id)
+        print "111"
+        assert obj3_2.parent.name == "doc name"
+        assert obj3_2.parent.age == 100500
+        
     def test_require(self):
         data = {
                 "name":"cool",
@@ -93,3 +105,6 @@ class DocTest(test.TestCase):
             del test1[key]
             self.assertRaises(exceptions.ValueRequiredError, DocWithRequires, **test1)
 
+            
+#    def test_link(self):
+        

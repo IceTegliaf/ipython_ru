@@ -15,15 +15,17 @@ class ValidationError(BaseError):
 
 
 class InvalidValueError(ValidationError):
-    def __init__(self, class_name, prop_name, value):
+    def __init__(self, class_name, prop_name, value, info=""):
         self.value = value
         self.class_name = class_name
         self.prop_name = prop_name
+        self.info = info
         
-    __unicode__ = lambda self: _("%(class_name)s.%(prop_name)s can't set value '%(value)s'") % {
+    __unicode__ = lambda self: _("%(class_name)s.%(prop_name)s can't set value '%(value)s' %(info)s") % {
                                                                                      "class_name": self.class_name,
                                                                                      "prop_name": self.prop_name,
-                                                                                     "value": self.value
+                                                                                     "value": self.value,
+                                                                                     "info": self.info
                                                                                      }
     
 class PropertyToJsonError(InvalidValueError):

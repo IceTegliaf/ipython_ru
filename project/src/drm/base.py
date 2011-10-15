@@ -1,10 +1,10 @@
 from pymongo.objectid import ObjectId
 from drm.connection import get_connection, get_db
 import types
-from drm.properties import LazyDoc
 from bisect import bisect
-from drm.utils import to_json
+from drm.utils import to_json, get_value
 from drm import exceptions
+from drm.lazy import LazyDoc
 
 
 
@@ -146,11 +146,11 @@ class MongoDoc(object):
         for name, value in kwargs.items():            
             prop = self._meta.get_prop_by_name(name)
             if prop:
-                value = prop.to_python(value)
-            else:
-                #dynamic props
-                if name!="_id" and isinstance(value, ObjectId):
-                    value = LazyDoc(self, value)
+                value = prop.clean(self, value)
+#            else:
+#                #dynamic props
+#                if name!="_id" and isinstance(value, ObjectId):
+#                    value = LazyDoc(self, value)
             setattr(self, name, value)
         
         #set default values
@@ -174,15 +174,17 @@ class MongoDoc(object):
         prepare = {}
         names_to_save = set(dir(self)) - set(self._meta.exclude)
         for name in names_to_save:
-            value = getattr(self, name)
+            
+            value = get_value(self, name)
+            
             if name=="_id" and not value: #skeep non _id
                 continue           
             
             prop = self._meta.get_prop_by_name(name)
             if prop:
-                value = prop.clean(value)
+                value = prop.clean(self, value)
                 if value:
-                    value = prop.to_json( value )                
+                    value = prop.to_json( self, value )                
             else:           
                 value = to_json(value)            
             prepare[name] = value

@@ -14,3 +14,14 @@ def to_json(val):
         val = [to_json(v) for v in val]
     
     return val    
+
+
+def get_value(instance, name):
+    if name in instance.__dict__:
+        return instance.__dict__[name]
+    
+    if name in type(instance).__dict__:
+        return type(instance).__dict__[name]
+    
+    return None
+ 

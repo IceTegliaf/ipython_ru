@@ -4,6 +4,10 @@ from drm import exceptions
 import datetime
 import re
 import time
+import types
+from pymongo.objectid import ObjectId
+from pymongo.errors import PyMongoError
+from drm.lazy import LazyDoc
 
      
 class BaseProperty(object):
@@ -24,16 +28,16 @@ class BaseProperty(object):
         klass._meta.add_property(name, self)
         self.klass=klass
         
-    def to_python(self, value):
+    def to_python(self, instance,  value):
         return value
     
-    def to_json(self, value):
+    def to_json(self, instance, value):
         return value
     
-    def clean(self, value):
+    def clean(self, instance,  value):
         if self.required and not value:
             raise exceptions.ValueRequiredError(self.klass.__name__, self.name)
-        return self.to_python(value)
+        return self.to_python(instance, value)
     
     def __cmp__(self, other):
         # This is needed because bisect does not take a comparison function.
@@ -48,22 +52,22 @@ class BaseProperty(object):
     
 class Integer(BaseProperty):
     
-    def to_python(self, value):
+    def to_python(self, instance, value):
         try:
             return int(value)
         except ValueError, e:
             raise exceptions.ValidationError("property Integer error: %s" % e)
     
-    def to_json(self, value):
+    def to_json(self, instance, value):
         return int(value)
     
     
 class String(BaseProperty):
     
-    def to_python(self, value):
+    def to_python(self, instance, value):
         return unicode(value)
     
-    def to_json(self, value):
+    def to_json(self, instance, value):
         return unicode(value)    
 
 
@@ -72,7 +76,7 @@ ansi_date_re = re.compile(r'^\d{4}-\d{1,2}-\d{1,2}$')
 
 class Date(BaseProperty):
     
-    def to_python(self, value):
+    def to_python(self, instance, value):
         if value is None:
             return value
         if isinstance(value, datetime.datetime):
@@ -92,7 +96,7 @@ class Date(BaseProperty):
         except ValueError, e:
             raise exceptions.ValidationError(_("Value error: %(reason)s") % {"reason": _(str(e))})
         
-    def to_json(self, value):
+    def to_json(self, instance, value):
         if not isinstance(value, datetime.date):
             raise exceptions.PropertyToJsonError(self.klass.__name__, self.name, value)
         return value.strftime("%Y-%m-%d")
@@ -101,7 +105,7 @@ class Date(BaseProperty):
     
 class DateTime(BaseProperty):
     
-    def to_python(self, value):
+    def to_python(self, instance, value):
         if value is None:
             return value
         if isinstance(value, datetime.datetime):
@@ -137,65 +141,117 @@ class DateTime(BaseProperty):
                 except ValueError:
                     raise exceptions.InvalidValueError(self.klass.__name__, self.name, value)
                 
-    def to_json(self, value):
+    def to_json(self, instance, value):
         if not isinstance(value, datetime.datetime):
             raise exceptions.PropertyToJsonError(self.klass.__name__, self.name, value)
         return value.strftime('%Y-%m-%d %H:%M:%S')
-        
-    
-    
-class LazyDoc(object):
-    
-    REF_DOC_NOT_LOADED = -1
-    
-    def __init__(self, doc, id):
-        self.doc = doc
-        self.id=id
-        self.ref_doc = LazyDoc.REF_DOC_NOT_LOADED
-        
-    def _load(self):
-        if self.ref_doc==LazyDoc.REF_DOC_NOT_LOADED:
-            try:
-                self.ref_doc = self.doc.objects.get(_id = self.id)
-            except self.doc.DoesNotExist:
-                self.ref_doc = None
-        
-        
-    def __getattr__(self, name):
-        self._load()
-        return getattr(self.ref_doc, name)
-    
-    #TODO: implement __setattr__  (see Django ForeignKey contibute to class)
-    
-    def __unicode__(self):
-        self._load()
-        return unicode(self.ref_doc)
-    __str__ = __unicode__
-    
-    
-    def  __eq__(self, doc):
-        self._load()
-        return self.ref_doc == doc
-    
-    def __ne__(self, doc):
-        self._load()
-        return self.ref_doc != doc
 
-    def __hasattr__(self, name):
-        self._load()
-        return hasattr(self.ref_doc, name)
+
+     
+    
+    
+
+        
+        
+#    def __getattr__(self, name):
+#        if hasattr(self, name):
+#            return getattr(self, name)
+#        
+#        print "__getattr__", name
+#        self._load()
+#        return getattr(self.ref_doc, name)
+#    
+#    #TODO: implement __setattr__  (see Django ForeignKey contibute to class)
+#    
+#    def __unicode__(self):
+#        print "__unicode__"
+#        self._load()
+#        return unicode(self.ref_doc)
+#    __str__ = __unicode__
+#    
+#    
+#    def  __eq__(self, doc):
+#        self._load()
+#        return self.ref_doc == doc
+#    
+#    def __ne__(self, doc):
+#        self._load()
+#        return self.ref_doc != doc
+#
+#    def __hasattr__(self, name):
+#        self._load()
+#        print "__hasattr__"
+#        return hasattr(self.ref_doc, name)
     
         
     
 #TODO: add Link (ForeignKey)
 class Link(BaseProperty):
     
-    def to_python(self, value):
-        print "!!!!!!!!!!"
-        return value
+    id_name = property(lambda self: "%s_id" % self.name)
+    cache_name = property(lambda self: "%s_doc" % self.name)
     
-    def to_json(self, value):
-        return value
+    def __init__(self, rel_class, *args, **kwargs):
+        super(Link, self).__init__(*args, **kwargs)
+        self.rel_class = rel_class
+        
+    def contribute_to_class(self, klass, name):
+        super(Link, self).contribute_to_class(klass, name)
+        setattr(klass, name,  LazyDoc(self))
+        self.klass._meta.add_exclude(self.id_name)
+        self.klass._meta.add_exclude(self.cache_name)
+    
+    def to_python(self, instance, value):
+        from drm.base import MongoDoc
+        
+        if isinstance(value, LazyDoc):
+            return getattr(instance, self.id_name)
+        
+        if isinstance(value, MongoDoc):
+            return value._id
+
+        try:
+            return ObjectId(value)
+        except (PyMongoError, TypeError), e:
+            raise exceptions.InvalidValueError(self.klass.__name__, self.name, value, unicode(e))
+        
+    
+    def to_json(self, instance, value):
+        from drm.base import MongoDoc
+        
+        if isinstance(value, LazyDoc):
+            print "to_json LazyDoc"
+            return getattr(instance, self.id_name)
+        
+        
+        if isinstance(value, (LazyDoc, MongoDoc)):
+            return value._id
+        
+        if isinstance(value, ObjectId):
+            return value
+        
+        raise exceptions.PropertyToJsonError(self.klass.__name__, self.name, value)
+    
+    def get(self, instance):
+        try:
+            return getattr(instance, self.cache_name)
+        except AttributeError:
+            _id = getattr(instance, self.id_name)
+            doc = self.rel_class.documents.get(_id = _id)
+            setattr(instance,  self.cache_name, doc)
+            
+        return doc
+    
+    def set(self, instance, value):
+        setattr(instance, self.id_name, self.clean(instance, value))
+        
+        
+        
+        
+    
+
+        
+        
         
         
  
