@@ -3,7 +3,7 @@ from drm.connection import get_connection
 import types
 from drm.properties import LazyDoc
 from drm.exceptions import ObjectDoesNotExist, UnknownDocumentRef
-from django.utils.datastructures import SortedDict
+from bisect import bisect
 
 
 def subclass_exception(name, parents, module):
@@ -14,23 +14,25 @@ def subclass_exception(name, parents, module):
 class Options(object):
     
     def __init__(self, name, klass):
-        self.props = SortedDict()
+        self.props = []
         self.name = name
         self.klass = klass
         self.exclude = []
         
+        
     def add_property(self, name, prop):
-        self.props[name] = prop
+        prop.name = name
+        self.props.insert(bisect(self.props, prop), prop)
         
     def add_exclude(self, name):
         self.exclude.append(name)
         
         
     def propery_names(self):
-        return self.props.keys()
+        return [prop.name for prop in self.props]
         
     def properties(self):
-        return self.props.items()
+        return self.props
 
 
     
@@ -79,6 +81,10 @@ class BaseMongoDoc(type):
             klass.DoesNotExist = subclass_exception('DoesNotExist', (ObjectDoesNotExist,), name)
             #load all props
             #klass._std_fields = [] #set(dir(klass))
+            
+            klass._meta.props
+            
+            #self.inner_order
              
             
             

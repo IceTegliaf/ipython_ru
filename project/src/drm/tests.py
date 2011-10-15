@@ -9,7 +9,9 @@ from drm.exceptions import ObjectDoesNotExist
 #TODO: write tests for data navigation (properties.Link, List ,Dictionary and etc)
 
 class Doc1(MongoDoc):
-    name = properties.String("verbose_name")
+    name = properties.String("name")
+    age = properties.Integer("age")
+    d1 = properties.Data("date 1")
     
 
 class DocTest(test.TestCase):
@@ -18,7 +20,9 @@ class DocTest(test.TestCase):
         obj =  Doc1()
         assert issubclass(obj.DoesNotExist, ObjectDoesNotExist)
         assert isinstance(obj._meta, Options)
-        assert obj._meta.propery_names()==["name"]
+        
+        print obj._meta.propery_names()
+        assert obj._meta.propery_names()==["name", "age", "d1"]
         
         
         

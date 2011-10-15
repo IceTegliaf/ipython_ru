@@ -6,10 +6,15 @@ import re
      
 class BaseProperty(object):
     
+    inner_creation_counter = 0
+        
     def __init__(self, verbose_name = "", required = False, db_index = False):
         self.verbose_name = verbose_name
         self.required = required
         self.db_index = db_index
+
+        BaseProperty.inner_creation_counter+=1
+        self.creation_counter = BaseProperty.inner_creation_counter
         
     def contribute_to_class(self, klass, name, value):
         setattr(klass, name, value)
@@ -20,6 +25,10 @@ class BaseProperty(object):
     
     def to_json(self, value):
         return value
+    
+    def __cmp__(self, other):
+        # This is needed because bisect does not take a comparison function.
+        return cmp(self.creation_counter, other.creation_counter)    
         
     
 class Integer(BaseProperty):
