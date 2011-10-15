@@ -1,27 +1,37 @@
 from pymongo.objectid import ObjectId
-from mongodoc.connection import get_connection
+from drm.connection import get_connection
 import types
+from drm.properties import LazyDoc
+from drm.exceptions import ObjectDoesNotExist, UnknownDocumentRef
+from django.utils.datastructures import SortedDict
 
 
 def subclass_exception(name, parents, module):
     return type(name, parents, {'__module__': module})
 
 
-class ObjectDoesNotExist(Exception):
-    "The requested object does not exist"
-    
-    __unicode__ = lambda self: "The requested object does not exist"
-    __str__= __unicode__
 
-class UnknownDocumentRef(Exception):
+class Options(object):
     
-    def __init__(self, doc_type, name):
-        self.doc_type = doc_type
+    def __init__(self, name, klass):
+        self.props = SortedDict()
         self.name = name
+        self.klass = klass
+        self.exclude = []
         
-    __unicode__ = lambda self: "Unknown document reference '%s' to '%s'" % (self.doc_type.__name__, self.name)
-    __str__= __unicode__
-    
+    def add_property(self, name, prop):
+        self.props[name] = prop
+        
+    def add_exclude(self, name):
+        self.exclude.append(name)
+        
+        
+    def propery_names(self):
+        return self.props.keys()
+        
+    def properties(self):
+        return self.props.items()
+
 
     
 class Manager(object):
@@ -47,62 +57,37 @@ class Manager(object):
 class BaseMongoDoc(type):
     
     def __new__(cls, name, bases, dct):
-        klass =  type.__new__(cls, name, bases, dct)
+        klass =  type.__new__(cls, name, bases, {})
+        
+
+        opts = klass._meta = Options(name, klass)
+        
+        opts.exclude=dir(klass)
+        
+        for name, value in dct.items():            
+            if hasattr(value, "contribute_to_class"):
+                value.contribute_to_class(klass, name, value)
+            else:
+                opts.add_exclude(name)
+                setattr(klass, name, value)
         
         if name!="MongoDoc":
             if not hasattr(klass, 'objects'):
                 klass.objects = Manager()
 
-            klass.objects.docs_name = name
-            klass.objects.docs_type = klass            
-                
+            klass.objects._meta = klass._meta            
             klass.DoesNotExist = subclass_exception('DoesNotExist', (ObjectDoesNotExist,), name)
+            #load all props
+            #klass._std_fields = [] #set(dir(klass))
+             
             
-        klass._std_fields = set(dir(klass))
+            
+        
             
         return klass
     
 
-class LazyDoc(object):
-    
-    REF_DOC_NOT_LOADED = -1
-    
-    def __init__(self, doc, id):
-        self.doc = doc
-        self.id=id
-        self.ref_doc = LazyDoc.REF_DOC_NOT_LOADED
-        
-    def _load(self):
-        if self.ref_doc==LazyDoc.REF_DOC_NOT_LOADED:
-            try:
-                self.ref_doc = self.doc.objects.get(_id = self.id)
-            except self.doc.DoesNotExist:
-                self.ref_doc = None
-        
-        
-    def __getattr__(self, name):
-        self._load()
-        return getattr(self.ref_doc, name)
-    
-    #TODO: implement __setattr__  (see Django ForeignKey contibute to class)
-    
-    def __unicode__(self):
-        self._load()
-        return unicode(self.ref_doc)
-    __str__ = __unicode__
-    
-    
-    def  __eq__(self, doc):
-        self._load()
-        return self.ref_doc == doc
-    
-    def __ne__(self, doc):
-        self._load()
-        return self.ref_doc != doc
 
-    def __hasattr__(self, name):
-        self._load()
-        return hasattr(self.ref_doc, name)
     
         
 

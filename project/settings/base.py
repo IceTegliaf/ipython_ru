@@ -48,7 +48,8 @@ INSTALLED_APPS = [
 #    "apps.tools",
 #    "apps.ice_tools",
 #    "apps.ice_basetypes",
-    "django_evolution",
+    "drm",
+    "docs",
 ]
 
 

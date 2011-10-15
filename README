@@ -18,7 +18,7 @@ Priority technologies:
 
 Project structute:
 
-docs/ 				- all project docs, not running code
+docs/ 				- all project documents
 project/ 			- site
 project/media/ 		- static content
 project/settings/	- project configuration.  Use settings/local.py for set your local configuration (Set Django settings adn e.t.c.) 
