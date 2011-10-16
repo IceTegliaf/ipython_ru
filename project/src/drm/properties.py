@@ -8,17 +8,31 @@ import types
 from pymongo.objectid import ObjectId
 from pymongo.errors import PyMongoError
 from drm.lazy import LazyDoc
+from tools.class_loader import get_class_by_string
 
+#TODO: add Float
+#TODO: add PositiveInteger  - Integer with validation
+#TODO: add choices
+
+def get_display(prop):
+    def wrap(self):
+        val = getattr(self, prop.name)
+        for key, name in prop.choices:
+            if key==val:
+                return name
+        raise exceptions.ValueNotInChoincesError(prop, val)
+    return wrap
      
 class BaseProperty(object):
     
     inner_creation_counter = 0
         
-    def __init__(self, verbose_name = "", required = False, db_index = False, default=None):
+    def __init__(self, verbose_name = "", required = False, db_index = False, default=None, choices = None):
         self.verbose_name = verbose_name
         self.required = required
         self.db_index = db_index
         self.default = default
+        self.choices = choices
 
         BaseProperty.inner_creation_counter+=1
         self.creation_counter = BaseProperty.inner_creation_counter
@@ -27,8 +41,14 @@ class BaseProperty(object):
         #setattr(klass, name, value)
         klass._meta.add_property(name, self)
         self.klass=klass
+        if self.choices:
+            setattr(klass, "get_%s_dispaly" % name, get_display(self))
         
     def to_python(self, instance,  value):
+        if self.choices:
+            keys = [x[0] for x in self.choices]
+            if value not in keys:
+                raise exceptions.ValueNotInChoincesError(self, value)            
         return value
     
     def to_json(self, instance, value):
@@ -37,6 +57,7 @@ class BaseProperty(object):
     def load_clean(self, instance,  value):
         if self.required and not value:
             raise exceptions.ValueRequiredError(self.klass.__name__, self.name)
+        #if 
         return self.to_python(instance, value)
 
     def save_clean(self, instance,  value):
@@ -64,7 +85,7 @@ class Integer(BaseProperty):
         try:
             return int(value)
         except ValueError, e:
-            raise exceptions.ValidationError("property Integer error: %s" % e)
+            raise exceptions.InvalidValueError(self.klass.__name__, self.name, value, unicode(e))
     
     def to_json(self, instance, value):
         return int(value)
@@ -78,6 +99,15 @@ class String(BaseProperty):
     def to_json(self, instance, value):
         return unicode(value)    
 
+class Boolean(BaseProperty):
+    def to_python(self, instance, value):
+        try:
+            return bool(value)
+        except ValueError, e:
+            raise exceptions.InvalidValueError(self.klass.__name__, self.name, value, unicode(e))
+    
+    def to_json(self, instance, value):
+        return bool(value)
 
 
 ansi_date_re = re.compile(r'^\d{4}-\d{1,2}-\d{1,2}$')
@@ -169,8 +199,6 @@ class DateTime(BaseProperty):
 #        self._load()
 #        return getattr(self.ref_doc, name)
 #    
-#    #TODO: implement __setattr__  (see Django ForeignKey contibute to class)
-#    
 #    def __unicode__(self):
 #        print "__unicode__"
 #        self._load()
@@ -191,9 +219,43 @@ class DateTime(BaseProperty):
 #        print "__hasattr__"
 #        return hasattr(self.ref_doc, name)
     
+class ListOf(BaseProperty):        
+
+    def __init__(self, element_type, *args, **kwargs):
+        if 'default' not in kwargs:
+            kwargs['default'] = []
+            
+        super(ListOf, self).__init__(*args, **kwargs)
+        if not isinstance(element_type, BaseProperty):
+            raise exceptions.InvalidArgumentError(_("element_type must be instance of 'BaseProperty' not '%(type)s'") % type(element_type))        
+        self.element_type = element_type
+        
+#    def contribute_to_class(self, klass, name):
+#        super(ListOf, self).contribute_to_class(klass, name)
+#        setattr(klass, name)
+        
+    def to_python(self, instance, value):
+        if isinstance(value, tuple):
+            value = list(value)
+            
+        if not isinstance(value, list):
+            raise exceptions.InvalidValueError(self.klass.__name__, self.name, value)            
+        
+        #check list contains
+        return [ self.element_type.to_python(instance, e) for e in value ]
+    
+    def to_json(self, instance, value):
+        if isinstance(value, tuple):
+            value = list(value)
+            
+        if not isinstance(value, list):
+            raise exceptions.PropertyToJsonError(self.klass.__name__, self.name, value)
+        
+        return [ self.element_type.to_json(instance, e) for e in value ]            
+        
         
     
-#TODO: add Link (ForeignKey)
+
 class Link(BaseProperty):
     
     id_name = property(lambda self: "%s_id" % self.name)
@@ -205,9 +267,17 @@ class Link(BaseProperty):
         
     def contribute_to_class(self, klass, name):
         super(Link, self).contribute_to_class(klass, name)
+        
+        if isinstance(self.rel_class, basestring):
+            if self.rel_class=="self":
+                self.rel_class = klass
+            else:
+                self.rel_class = get_class_by_string("%s.%s" % (klass.__module__, self.rel_class))
+                
         setattr(klass, name,  LazyDoc(self))
         self.klass._meta.add_exclude(self.id_name)
-        self.klass._meta.add_exclude(self.cache_name)
+        self.klass._meta.add_exclude(self.cache_name)       
+
         
     def to_python(self, instance, value):
         from drm.base import MongoDoc
@@ -230,7 +300,9 @@ class Link(BaseProperty):
         from drm.base import MongoDoc
         
         if isinstance(value, LazyDoc):
-            return getattr(instance, self.id_name)
+            if hasattr(instance, self.id_name):
+                return getattr(instance, self.id_name)
+            return None
         
         
         if isinstance(value, (LazyDoc, MongoDoc)):
@@ -245,11 +317,16 @@ class Link(BaseProperty):
         try:
             return getattr(instance, self.cache_name)
         except AttributeError:
+            pass
+        
+        if hasattr(instance, self.id_name):
             _id = getattr(instance, self.id_name)
+            print "load obj:", _id
             doc = self.rel_class.documents.get(_id = _id)
             setattr(instance,  self.cache_name, doc)
+            return doc
             
-        return doc
+        return None
     
     def set_value(self, instance, value):
         if isinstance(value, self.rel_class):

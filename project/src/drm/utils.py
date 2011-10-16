@@ -25,3 +25,13 @@ def get_value(instance, name):
     
     return None
  
+ 
+def has_value(instance, name):
+     
+    if name in instance.__dict__:
+        return True
+    
+    if name in type(instance).__dict__:
+        return True
+    
+    return False     

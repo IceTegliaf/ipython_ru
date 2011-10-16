@@ -68,3 +68,15 @@ class UnknownDocumentRef(Exception):
                                                                              }
     __str__= __unicode__
     
+    
+class ValueNotInChoincesError(ValidationError):
+    
+    def __init__(self, prop, value):
+        self.prop = prop
+        self.value = value
+        
+    __unicode__ = lambda self: _("Can't get display name for %(class)s.%(prop)s=%(value)s" % {
+                                                                                              'class': self.prop.klass.__name__,
+                                                                                              'prop': self.prop.name,
+                                                                                              'value': self.value,
+                                                                                              })

@@ -2,7 +2,7 @@ from pymongo.objectid import ObjectId
 from drm.connection import get_connection, get_db
 import types
 from bisect import bisect
-from drm.utils import to_json, get_value
+from drm.utils import to_json, get_value, has_value
 from drm import exceptions
 from drm.lazy import LazyDoc
 
@@ -152,7 +152,7 @@ class MongoDoc(object):
         
         #set default values
         for prop in self._meta.properties():
-            if hasattr(self, prop.name):
+            if has_value(self, prop.name):
                 continue
             
             if prop.required:
@@ -184,6 +184,7 @@ class MongoDoc(object):
                 value = to_json(value)            
             prepare[name] = value
             
+        print "save doc:", prepare
         self._id = self.documents.collection.save(prepare)
         self.post_save()
         

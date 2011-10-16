@@ -1,14 +1,14 @@
+from copy import copy
 from django import test
 from drm import properties, exceptions
 from drm.base import MongoDoc, Options
 from drm.exceptions import ObjectDoesNotExist
+from drm.unitest import MongoDocTest
 import datetime
-from django.conf import settings
-from drm.connection import get_connection, get_db
-from pymongo import Connection
-from copy import copy
 
 #TODO: write tests for data navigation (properties.Link, List ,Dictionary and etc)
+#TODO: test Boolean
+#TODO: test choices + get_display
 
 class Doc1(MongoDoc):
     name = properties.String()
@@ -23,27 +23,11 @@ class DocWithRequires(MongoDoc):
     dt = properties.DateTime(required = True)
     
 class DocWithLink(MongoDoc):
-    parent = properties.Link(Doc1)
+    parent = properties.Link("Doc1")
 
 
-class DocTest(test.TestCase):
-    
-    @classmethod
-    def setUpClass(cls):
-        if hasattr(settings, "MONGODB_DATABSSE_NAME"):
-            cls._old_db = settings.MONGODB_DATABSSE_NAME
-        else:
-            cls._old_db = None
-        settings.MONGODB_DATABSSE_NAME = "test_db"
-        
-         
-    @classmethod         
-    def tearDownClass(cls):
-        get_connection().drop_database(settings.MONGODB_DATABSSE_NAME)
-        if cls._old_db:        
-            settings.MONGODB_DATABSSE_NAME = cls._old_db
-        else:
-            del settings.MONGODB_DATABSSE_NAME
+class DocTest(MongoDocTest):
+
     
     def test_metaclass(self):
         obj =  Doc1()
