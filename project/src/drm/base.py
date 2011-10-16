@@ -146,11 +146,8 @@ class MongoDoc(object):
         for name, value in kwargs.items():            
             prop = self._meta.get_prop_by_name(name)
             if prop:
-                value = prop.clean(self, value)
-#            else:
-#                #dynamic props
-#                if name!="_id" and isinstance(value, ObjectId):
-#                    value = LazyDoc(self, value)
+                value = prop.load_clean(self, value)
+
             setattr(self, name, value)
         
         #set default values
@@ -170,7 +167,7 @@ class MongoDoc(object):
         pass
     
     def save(self):
-        self.pre_save()        
+        self.pre_save()
         prepare = {}
         names_to_save = set(dir(self)) - set(self._meta.exclude)
         for name in names_to_save:
@@ -182,9 +179,7 @@ class MongoDoc(object):
             
             prop = self._meta.get_prop_by_name(name)
             if prop:
-                value = prop.clean(self, value)
-                if value:
-                    value = prop.to_json( self, value )                
+                value = prop.save_clean(self, value)
             else:           
                 value = to_json(value)            
             prepare[name] = value

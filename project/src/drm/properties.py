@@ -34,10 +34,18 @@ class BaseProperty(object):
     def to_json(self, instance, value):
         return value
     
-    def clean(self, instance,  value):
+    def load_clean(self, instance,  value):
         if self.required and not value:
             raise exceptions.ValueRequiredError(self.klass.__name__, self.name)
         return self.to_python(instance, value)
+
+    def save_clean(self, instance,  value):
+        if self.required and not value:
+            raise exceptions.ValueRequiredError(self.klass.__name__, self.name)
+        
+        if value:
+            return self.to_json(instance, value)
+        return value
     
     def __cmp__(self, other):
         # This is needed because bisect does not take a comparison function.
@@ -200,7 +208,7 @@ class Link(BaseProperty):
         setattr(klass, name,  LazyDoc(self))
         self.klass._meta.add_exclude(self.id_name)
         self.klass._meta.add_exclude(self.cache_name)
-    
+        
     def to_python(self, instance, value):
         from drm.base import MongoDoc
         
@@ -208,6 +216,8 @@ class Link(BaseProperty):
             return getattr(instance, self.id_name)
         
         if isinstance(value, MongoDoc):
+            if not isinstance(value, self.rel_class):
+                raise exceptions.InvalidValueError(self.klass.__name__, self.name, value)            
             return value._id
 
         try:
@@ -220,7 +230,6 @@ class Link(BaseProperty):
         from drm.base import MongoDoc
         
         if isinstance(value, LazyDoc):
-            print "to_json LazyDoc"
             return getattr(instance, self.id_name)
         
         
@@ -232,7 +241,7 @@ class Link(BaseProperty):
         
         raise exceptions.PropertyToJsonError(self.klass.__name__, self.name, value)
     
-    def get(self, instance):
+    def get_value(self, instance):
         try:
             return getattr(instance, self.cache_name)
         except AttributeError:
@@ -242,8 +251,12 @@ class Link(BaseProperty):
             
         return doc
     
-    def set(self, instance, value):
-        setattr(instance, self.id_name, self.clean(instance, value))
+    def set_value(self, instance, value):
+        if isinstance(value, self.rel_class):
+            setattr(instance,  self.cache_name, value)
+        elif hasattr(instance,  self.cache_name):
+            delattr(instance,  self.cache_name)
+        setattr(instance, self.id_name, self.to_python(instance, value))
         
         
         

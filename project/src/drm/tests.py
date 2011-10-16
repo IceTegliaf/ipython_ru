@@ -88,9 +88,23 @@ class DocTest(test.TestCase):
         obj3.save()
         
         obj3_2 = DocWithLink.documents.get(_id = obj3._id)
-        print "111"
         assert obj3_2.parent.name == "doc name"
         assert obj3_2.parent.age == 100500
+        
+        dwr = DocWithRequires(
+                              name = "doc name",
+                              age = 100500,
+                              d = datetime.date.today(),
+                              dt = datetime.datetime.today()
+                              )
+        obj3_2.parent = obj2
+        obj3_2.save()
+
+        def test(obj, obj2):
+            obj.parent = obj2
+        self.assertRaises(exceptions.InvalidValueError, test, obj3_2, dwr)
+        obj3_2.save()
+        
         
     def test_require(self):
         data = {

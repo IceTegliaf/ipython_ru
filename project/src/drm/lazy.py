@@ -13,13 +13,13 @@ class LazyDoc(object):
             return self
                 
         try:
-            ret = self.prop.get(instance)
+            ret = self.prop.get_value(instance)
         except Exception, e:
             print e   
         return ret
         
     def __set__(self, instance, value):
-        return self.prop.set(instance, value)
+        return self.prop.set_value(instance, value)
         
         
 #class LazyLinkedDoc(object):
