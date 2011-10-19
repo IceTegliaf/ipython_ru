@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dox="http://ipython.ru/dox/v1" targetNamespace="http://ipython.ru/dox/v1">
-    <element name="ipython_ru_dox">
+    <element name="ipython_ru">
     	<complexType>
     		<sequence>
     			<element name="package" maxOccurs="unbounded" minOccurs="1">

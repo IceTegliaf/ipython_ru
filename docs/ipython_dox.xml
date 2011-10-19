@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<dox:ipython_ru_dox xsi:schemaLocation="dox.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"	
+<dox:ipython_ru xsi:schemaLocation="dox.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"	
 	xmlns:dox="http://ipython.ru/dox/v1"
 	ver="1">
 	<package name="django.template" version="1.9.1release" file="django/template/__init__.py">
@@ -104,4 +104,4 @@ u'<html></html>'
 	<package name="django.template.smartif" file="test.py">
 		<doc><![CDATA[Parser and utilities for the smart 'if' tag]]></doc>		
 	</package>	
-</dox:ipython_ru_dox>
+</dox:ipython_ru>
