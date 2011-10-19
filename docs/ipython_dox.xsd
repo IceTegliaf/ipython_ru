@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dox="http://ipython.ru/dox/v1" targetNamespace="http://ipython.ru/dox/v1">
+    <element name="ipython_ru_dox">
+    	<complexType>
+    		<sequence>
+    			<element name="package" maxOccurs="unbounded" minOccurs="1">
+    				<complexType>
+    					<sequence>
+    						<element name="doc" type="dox:Doc"
+    							maxOccurs="1" minOccurs="0">
+    						</element>
+    						<element name="attribute"
+    							type="dox:Variable" maxOccurs="unbounded" minOccurs="0">
+    						</element>
+    						<element name="method" type="dox:Function"
+    							maxOccurs="unbounded" minOccurs="0">
+    						</element>
+    						<element name="class" maxOccurs="unbounded" minOccurs="0" type="dox:Class">
+    						</element>
+    					</sequence>
+    					<attribute name="name" type="string"
+    						use="required">
+    					</attribute>
+    					<attribute name="version" type="string"
+    						use="optional">
+    					</attribute>
+    					<attribute name="file" type="string"
+    						use="required">
+    					</attribute>
+    				</complexType>
+    			</element>
+    		</sequence>
+    		<attribute name="ver" type="string" use="required" fixed="1"></attribute>
+    	</complexType>
+    </element>
+
+    <simpleType name="Doc">
+    	<restriction base="string"></restriction>
+    </simpleType>
+
+    <complexType name="Variable">
+    	<simpleContent>
+    		<extension base="string">
+    			<attribute name="name" type="string"></attribute>
+    			<attribute name="type" type="string"></attribute>
+    			<attribute name="value" type="string"></attribute>
+    		</extension>
+    	</simpleContent>
+    </complexType>    
+
+    <complexType name="Function">
+    	<sequence>
+    		<element name="doc" type="dox:Doc" maxOccurs="1"
+    			minOccurs="0">
+    		</element>
+    		<element name="argument" type="dox:Variable"
+    			maxOccurs="unbounded" minOccurs="0">
+    		</element>
+    		<element name="return" type="dox:Doc" maxOccurs="1"
+    			minOccurs="0">
+    		</element>
+    	</sequence>
+    	<attribute name="name" type="string" use="required"></attribute>
+    	<attribute name="type" type="dox:MethodType" use="required"></attribute>
+    </complexType>
+
+    <simpleType name="MethodType">
+    	<restriction base="string">
+    		<enumeration value="static"></enumeration>
+    		<enumeration value="class"></enumeration>
+    		<enumeration value="object"></enumeration>
+    	</restriction>
+    </simpleType>
+    <complexType name="Class">
+    	<sequence>
+    		<element minOccurs="0" maxOccurs="1" name="doc"
+    			type="dox:Doc">
+    		</element>
+    		<element minOccurs="1" maxOccurs="unbounded"
+    			name="extend">
+    			<complexType>
+    				<attribute use="required" name="name"
+    					type="string">
+    				</attribute>
+    			</complexType>
+    		</element>
+    		<element minOccurs="0" maxOccurs="unbounded"
+    			name="attribute" type="dox:Variable">
+    		</element>
+    		<element minOccurs="0" maxOccurs="unbounded" name="method"
+    			type="dox:Function">
+    		</element>
+    		<element name="class" type="dox:Class" maxOccurs="unbounded" minOccurs="0"></element>
+    	</sequence>
+    	<attribute use="required" name="name" type="string"></attribute>
+    </complexType>
+</schema>
