@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dox:dox xsi:schemaLocation="dox.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	
+	xmlns:dox="http://ipython.ru/dox/v1/">
+	<dox:package name="django.template" version="1.9.1release" file="django/template/__init__.py">
+		<dox:doc><![CDATA[This is the Django template system.
+ 
+How it works:
+ 
+The Lexer.tokenize() function converts a template string (i.e., a string containing
+markup with custom template tags) to tokens, which can be either plain text
+(TOKEN_TEXT), variables (TOKEN_VAR) or block statements (TOKEN_BLOCK).
+ 
+The Parser() class takes a list of tokens in its constructor, and its parse()
+method returns a compiled template -- which is, under the hood, a list of
+Node objects.
+ 
+Each Node is responsible for creating some sort of output -- e.g. simple text
+(TextNode), variable values in a given context (VariableNode), results of basic
+logic (IfNode), results of looping (ForNode), or anything else. The core Node
+types are TextNode, VariableNode, IfNode and ForNode, but plugin modules can
+define their own custom node types.
+ 
+Each Node has a render() method, which takes a Context and returns a string of
+the rendered node. For example, the render() method of a Variable Node returns
+the variable's value as a string. The render() method of an IfNode returns the
+rendered output of whatever was inside the loop, recursively.
+ 
+The Template class is a convenient wrapper that takes care of template
+compilation and rendering.
+ 
+Usage:
+ 
+The only thing you should ever use directly in this file is the Template class.
+Create a compiled template object with a template_string, then call render()
+with a context. In the compilation stage, the TemplateSyntaxError exception
+will be raised if the template doesn't have proper syntax.
+ 
+Sample code:
+ 
+>>> from django import template
+>>> s = u'<html>{% if test %}<h1>{{ varvalue }}</h1>{% endif %}</html>'
+>>> t = template.Template(s)
+ 
+(t is now a compiled template, and its render() method can be called multiple
+times with multiple contexts)
+ 
+>>> c = template.Context({'test':True, 'varvalue': 'Hello'})
+>>> t.render(c)
+u'<html><h1>Hello</h1></html>'
+>>> c = template.Context({'test':False, 'varvalue': 'Hello'})
+>>> t.render(c)
+u'<html></html>'
+		]]></dox:doc>		
+	
+		<dox:attribute name="ANYFORMAT" value="268435456" type="int">Info</dox:attribute>
+		<dox:attribute name="BIG_ENDIAN" value="4321"/>
+		
+		<dox:method name="function_name">
+			<dox:doc><![CDATA[Display stage -- can be called many times]]></dox:doc>
+			<dox:argument name="template_string">description info argument - for excample use 'reST' format analize for get this info</dox:argument>
+			<dox:argument name="origin" type="NoneType" value="None"/>
+			<dox:argument name="name" type="str" value="&lt;Unknown Template&gt;"/>			
+			<dox:return>exists if using reST or equals</dox:return>			
+		</dox:method>
+		
+		<dox:class name="BaseForm">
+			<dox:extend name="django.utils.encoding.StrAndUnicode"/>
+			<dox:doc><![CDATA[Common base class for all exceptions]]></dox:doc>
+			<dox:attribute name="BIG_ENDIAN" value="4321" type="int">Test help</dox:attribute>
+			
+			<dox:method type="static" name="function_name">
+				<dox:doc><![CDATA[Display stage -- can be called many times]]></dox:doc>
+				<dox:argument name="template_string">description info argument - for excample use 'reST' format analize for get this info</dox:argument>
+				<dox:argument name="origin" type="NoneType" value="None"/>
+				<dox:argument name="name" type="str" value="&lt;Unknown Template&gt;"/>
+				<dox:return>exists if using reST or equals</dox:return>			
+			</dox:method>
+			
+			<dox:method type="class" name="function_class">
+				<dox:doc><![CDATA[Display stage -- can be called many times]]></dox:doc>
+				<dox:argument name="template_string">description info argument - for excample use 'reST' format analize for get this info</dox:argument>
+				<dox:argument name="origin" type="NoneType" value="None"/>
+				<dox:argument name="name" type="str" value="&lt;Unknown Template&gt;"/>
+				<dox:return>exists if using reST or equals</dox:return>			
+			</dox:method>
+			
+			<dox:method type="object" name="function_object">
+				<dox:doc><![CDATA[Display stage -- can be called many times]]></dox:doc>
+				<dox:argument name="template_string">description info argument - for excample use 'reST' format analize for get this info</dox:argument>
+				<dox:argument name="origin" type="NoneType" value="None"/>
+				<dox:argument name="name" type="str" value="&lt;Unknown Template&gt;"/>
+				<dox:return>exists if using reST or equals</dox:return>
+			</dox:method>						
+		</dox:class>		
+	</dox:package>
+	
+	<dox:package name="django.template.smartif" file="test.py">
+		<dox:doc><![CDATA[Parser and utilities for the smart 'if' tag]]></dox:doc>		
+	</dox:package>	
+</dox:dox>

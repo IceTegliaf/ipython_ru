@@ -1,42 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema targetNamespace="http://ipython.ru/dox/" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://ipython.ru/dox/">
+<schema targetNamespace="http://ipython.ru/dox/v1/" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:dox="http://ipython.ru/dox/v1/">
     <element name="dox">
     	<complexType>
     		<sequence>
-    			<element name="package">
-    				<complexType>
-    					<sequence>
-    						<element ref="tns:doc"></element>
-    						<element ref="tns:attribute"></element>
-    						<element ref="tns:method"></element>
-    						<element ref="tns:class"></element>
-    					</sequence>
-    					<attribute name="name" type="string"
-    						use="required">
-    					</attribute>
-    					<attribute name="version" type="string" use="optional"></attribute>
-    					<attribute name="file" type="string" use="required"></attribute>
-    				</complexType>
-    			</element>
+    			<element ref="dox:package" maxOccurs="unbounded" minOccurs="1"></element>
     		</sequence>
     		<attribute name="ver" type="int" fixed="1"></attribute>
     	</complexType>
     </element>
+    
+	<element name="package">
+		<complexType>
+			<sequence>
+				<element ref="dox:doc" maxOccurs="1" minOccurs="0"></element>
+				<element ref="dox:attribute" maxOccurs="unbounded" minOccurs="0"></element>
+				<element ref="dox:method" maxOccurs="unbounded" minOccurs="0"></element>
+				<element ref="dox:class" maxOccurs="unbounded" minOccurs="0"></element>
+			</sequence>
+			<attribute name="name" type="string"
+				use="required">
+			</attribute>
+			<attribute name="version" type="string" use="optional"></attribute>
+			<attribute name="file" type="string" use="required"></attribute>
+		</complexType>
+	</element>    
 
 
     <element name="doc" type="string"></element>
 
-    <element name="attribute" type="tns:Variable"></element>
+    <element name="attribute" type="dox:Variable"></element>
 
     <element name="method">
     	<complexType>
     		<sequence>
-    			<element name="argument" maxOccurs="unbounded" minOccurs="0"  type="tns:Variable">
+    			<element ref="dox:doc" maxOccurs="1"
+    				minOccurs="0">
     			</element>
-    			<element ref="tns:doc" maxOccurs="unbounded" minOccurs="0"></element>
-    			<element name="return" type="string" maxOccurs="unbounded" minOccurs="0"></element>
+    			<element ref="dox:argument" maxOccurs="unbounded"
+    				minOccurs="0">
+    			</element>
+    			<element ref="dox:return" maxOccurs="1" minOccurs="0"></element>
     		</sequence>
-    		<attribute name="type" type="tns:MethodType" use="optional" default="object"></attribute>
+    		<attribute name="type" type="dox:MethodType" use="optional" default="object"></attribute>
     		<attribute name="name" type="string" use="required"></attribute>
     	</complexType>
     </element>
@@ -52,17 +57,23 @@
     <element name="class">
     	<complexType>
     		<sequence>
-    			<element name="extend" maxOccurs="unbounded" minOccurs="1">
-    				<complexType>
-    					<attribute name="name" type="string"></attribute>
-    				</complexType>
-    			</element>
-    			<element ref="tns:doc" maxOccurs="1" minOccurs="0"></element>
-    			<element ref="tns:attribute" maxOccurs="unbounded" minOccurs="0"></element>
-    			<element ref="tns:method" maxOccurs="unbounded" minOccurs="0"></element>
+    			<element ref="dox:extend" maxOccurs="unbounded" minOccurs="1"></element>
+    			<element ref="dox:doc" maxOccurs="1" minOccurs="0"></element>
+    			<element ref="dox:attribute" maxOccurs="unbounded" minOccurs="0"></element>
+    			<element ref="dox:method" maxOccurs="unbounded" minOccurs="0"></element>
     		</sequence>
     		<attribute name="name" type="string" use="required"></attribute>
-    	</complexType></element>
+    	</complexType>
+    </element>
+    	
+    
+	<element name="extend">
+		<complexType>
+			<attribute name="name" type="string"></attribute>
+		</complexType>
+	</element>
+    	
+    	
 
     <complexType name="Variable">
     	<simpleContent>
@@ -73,4 +84,7 @@
     		</extension>
     	</simpleContent>
     </complexType>
+
+    <element name="argument" type="dox:Variable"></element>
+    <element name="return" type="string"></element>
 </schema>
