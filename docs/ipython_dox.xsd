@@ -41,7 +41,7 @@
     <complexType name="Variable">
     	<simpleContent>
     		<extension base="string">
-    			<attribute name="name" type="string"></attribute>
+    			<attribute name="name" type="dox:Name"></attribute>
     			<attribute name="type" type="string"></attribute>
     			<attribute name="value" type="string"></attribute>
     		</extension>
@@ -60,7 +60,7 @@
     			minOccurs="0">
     		</element>
     	</sequence>
-    	<attribute name="name" type="string" use="required"></attribute>
+    	<attribute name="name" type="dox:Name" use="required"></attribute>
     	<attribute name="type" type="dox:MethodType" use="required"></attribute>
     </complexType>
 
@@ -92,6 +92,13 @@
     		</element>
     		<element name="class" type="dox:Class" maxOccurs="unbounded" minOccurs="0"></element>
     	</sequence>
-    	<attribute use="required" name="name" type="string"></attribute>
+    	<attribute use="required" name="name" type="dox:Name"></attribute>
     </complexType>
+
+    <simpleType name="Name">
+    	<restriction base="string">
+    	<pattern value="[_a-zA-Z]+[\w\d_]*"/>
+    	</restriction>
+    </simpleType>
+    
 </schema>

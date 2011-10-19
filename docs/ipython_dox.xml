@@ -58,8 +58,8 @@ u'<html></html>'
 		
 		<method name="function_name" type="static">
 			<doc><![CDATA[Display stage -- can be called many times]]></doc>
-			<argument name="template_string">description info argument - for excample use 'reST' format analize for get this info</argument>
-			<argument name="origin" type="NoneType" value="None"/>
+			<argument name="template_string2cool_test">description info argument - for excample use 'reST' format analize for get this info</argument>
+			<argument name="Origin" type="NoneType" value="None"/>
 			<argument name="name" type="str" value="&lt;Unknown Template&gt;"/>			
 			<return>exists if using reST or equals</return>			
 		</method>
