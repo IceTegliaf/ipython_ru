@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 #    "apps.ice_basetypes",
     "drm",
     "docs",
+    "dox.harvester",
 ]
 
 
