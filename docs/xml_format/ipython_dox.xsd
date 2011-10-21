@@ -15,7 +15,8 @@
     						<element name="method" type="dox:Function"
     							maxOccurs="unbounded" minOccurs="0">
     						</element>
-    						<element name="class" maxOccurs="unbounded" minOccurs="0" type="dox:Class">
+    						<element name="class" maxOccurs="unbounded"
+    							minOccurs="0" type="dox:Class">
     						</element>
     					</sequence>
     					<attribute name="name" type="string"
@@ -27,6 +28,7 @@
     					<attribute name="file" type="string"
     						use="required">
     					</attribute>
+    					<attribute name="error" type="string" use="optional"></attribute>
     				</complexType>
     			</element>
     		</sequence>
@@ -39,13 +41,12 @@
     </simpleType>
 
     <complexType name="Variable">
-    	<simpleContent>
-    		<extension base="string">
-    			<attribute name="name" type="dox:Name"></attribute>
-    			<attribute name="type" type="string"></attribute>
-    			<attribute name="value" type="string"></attribute>
-    		</extension>
-    	</simpleContent>
+    	<sequence>
+    		<element name="doc" type="dox:Doc"></element>
+    		<element name="value" type="string"></element>
+    	</sequence>
+    	<attribute name="name" type="dox:Name"></attribute>
+ 		<attribute name="type" type="string"></attribute>
     </complexType>    
 
     <complexType name="Function">
