@@ -127,7 +127,7 @@ class Serialize(object):
             if func.is_local():
                 self.begin("function").set("name", func.name)
                 spec = func.argspec
-                print "func:", func.name, spec
+#                print "func:", func.name, spec
                 self.set("args", spec.varargs, skip_none = True)
                 self.set("kwargs", spec.keywords, skip_none = True)
                 
@@ -153,6 +153,10 @@ class Serialize(object):
         for cls in classes:
             if cls.is_local():
                 self.begin("class").set("name", cls.name).end()
+                
+                self.begin("doc").data(cls.get_doc()).end()
+                
+                self.add_object(cls.vars, cls.functions, cls.classes)
                 
                 
 

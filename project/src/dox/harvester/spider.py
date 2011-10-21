@@ -9,15 +9,16 @@ PYTHON_EXT = [".py", ".pyc", ".pyo"]
 
 class Variable(object):
     
-    def __init__(self, pkg, name):
+    def __init__(self, pkg, obj, name):
         self.pkg = pkg
+        self.obj = obj
         self.name = name
     
     def get_doc(self):
         return self.value.__doc__
         
     doc = property(get_doc)
-    value = property(lambda self: getattr(self.pkg.mod, self.name))
+    value = property(lambda self: getattr(self.obj, self.name))
     type = property(lambda self: type(self.value))
     
     type_name = property(lambda self: type(self.value).__name__)
@@ -42,10 +43,12 @@ class Function(Variable):
 
 
 
-class VariableContainer(object):
+class Container(object):
     
     def __init__(self):
         self.vars = []
+        self.classes = []
+        self.functions = []
     
     def find_var(self, name):
         for var in self.vars:
@@ -53,18 +56,47 @@ class VariableContainer(object):
                 return var
         return None
     
-class ClassContainer():
-    
-    def __init__(self):
-        self.classes = []
-        
-class FunctionContainer():
-    
-    def __init__(self):
-        self.functions = []        
+    def harvest_object(self, spider, pkg, obj):
             
-class Class(Variable, VariableContainer, FunctionContainer):
-    pass
+        for name, value in obj.__dict__.items():
+            #class
+            if isclass(value):
+                cls = Class(pkg, obj, name)                
+                self.classes.append(cls)
+                if not cls.is_local():                
+                    spider.harvest_package(cls.source_module())
+                    
+                cls.harvest_object(spider, pkg, value)
+                continue
+            
+            #function
+            if isinstance(value, types.FunctionType):
+                func = Function(pkg, obj, name)
+                self.functions.append(func)
+                if not func.is_local():                
+                    spider.harvest_package(func.source_module())                
+                continue
+            
+            #parse local vars
+            if name == "__file__":
+                self.file = self.spider.normalize_file_name(value)
+                
+            elif name not in Package.SKIP_VARS:
+                v = Variable(pkg, obj, name)
+                
+                if not v.is_local():
+                    spider.harvest_package(v.source_module())
+                self.vars.append(v)        
+    
+                
+            
+class Class(Variable, Container):
+    
+    def __init__(self, pkg, obj, name):
+        Variable.__init__(self, pkg, obj, name)
+        Container.__init__(self)
+        
+    
 
         
 #    def is_ref(self):
@@ -72,15 +104,13 @@ class Class(Variable, VariableContainer, FunctionContainer):
     
     
     
-class Package(VariableContainer, ClassContainer, FunctionContainer):
+class Package(Container):
     VERSION_VARIANTS = ['__version__', 'version', 'VERSION']
-    SKIP_VARS = ['__builtins__', '__name__', '__doc__', '__path__', '__package__']
+    SKIP_VARS = ['__builtins__', '__name__', '__doc__', '__path__', '__package__', '__module__', '__dict__', '__weakref__']
     
     
     def __init__(self, spider, name):
-        VariableContainer.__init__(self)
-        ClassContainer.__init__(self)
-        FunctionContainer.__init__(self)
+        Container.__init__(self)
         
         self.spider = spider
         self.name = name
@@ -105,7 +135,6 @@ class Package(VariableContainer, ClassContainer, FunctionContainer):
             self.depending_on.append(name)
             
     
-    
 
         
     def harvest(self):
@@ -122,33 +151,8 @@ class Package(VariableContainer, ClassContainer, FunctionContainer):
             if isinstance(value, types.ModuleType):
                 self.spider.harvest_package(value.__name__)
                 continue
-
-            #class
-            if isclass(value):
-                cls = Class(self, name)                
-                self.classes.append(cls)
-                if not cls.is_local():                
-                    self.spider.harvest_package(cls.source_module())
-                continue
             
-            #function
-            if isinstance(value, types.FunctionType):
-                func = Function(self, name)
-                self.functions.append(func)
-                if not func.is_local():                
-                    self.spider.harvest_package(func.source_module())                
-                continue
-            
-            #parse local vars
-            if name == "__file__":
-                self.file = self.spider.normalize_file_name(value)
-                
-            elif name not in Package.SKIP_VARS:
-                v = Variable(self, name)
-                
-                if not v.is_local():
-                    self.spider.harvest_package(v.source_module())
-                self.vars.append(v)
+        self.harvest_object(self.spider, self, self.mod)
                 
         #scan files
         if os.path.basename(self.mod.__file__).startswith("__init__."): #scan all files
